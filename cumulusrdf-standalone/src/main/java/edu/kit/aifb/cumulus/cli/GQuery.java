@@ -13,8 +13,6 @@ import edu.kit.aifb.geo.builder.BuildQuery;
 import edu.kit.aifb.geo.builder.EjectCalculus;
 import edu.kit.aifb.geo.builder.util.Components;
 
-
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,7 +59,7 @@ public class GQuery extends Command {
         SailRepositoryConnection con = null;
         SailRepository repo = null;
         BuildQuery convert;
-
+        EjectCalculus op;
         try {
             final CumulusRDFSail sail = new CumulusRDFSail(store);
             sail.initialize();
@@ -69,10 +67,12 @@ public class GQuery extends Command {
             repo = new SailRepository(sail);
             con = repo.getConnection();
             convert = new BuildQuery();
-
+            op = new EjectCalculus();
+            
             String gquery = convert.getQuery(query);
+            long limit = convert.getLimit();
+            
             List<Components> componentes = convert.getC();
-            EjectCalculus e = new EjectCalculus();
 
             org.openrdf.query.Query parsed_query = con.prepareQuery(QueryLanguage.SPARQL, gquery);
 
@@ -84,23 +84,23 @@ public class GQuery extends Command {
             } else if (parsed_query instanceof TupleQuery) {
                 _log.info(MessageCatalog._00021_PARSED_SELECT_ANSWER);
                 for (final TupleQueryResult result = ((TupleQuery) parsed_query).evaluate(); result.hasNext(); i++) {
-                    List<String> ls = new ArrayList<>();
-                    for (Components componente : componentes) {
-                        String op = componente.getOp();
-                        String x = result.next().getValue(componente.getX()).stringValue();
-                        String y = result.next().getValue(componente.getY()).stringValue();
-                        if (!((x.isEmpty()) && y.isEmpty())) {
-                            if (e.topologicalRelations(op, x, y)) {
-                                ls.add("s");
-                            } else {
-                                ls.add("n");
-                            }
-                        }
-                    }
-
-                    if (!ls.contains("n")) {
+//                    List<String> ls = new ArrayList<>();
+//                    for (Components componente : componentes) {
+//                        String ops = componente.getOp();
+//                        String x = result.next().getValue(componente.getX()).stringValue();
+//                        String y = result.next().getValue(componente.getY()).stringValue();
+//                        if (!((x.isEmpty()) && y.isEmpty())) {
+//                            if (op.topologicalRelations(ops, x, y)) {
+//                                ls.add("s");
+//                            } else {
+//                                ls.add("n");
+//                            }
+//                        }
+//                    }
+//
+//                    if (!ls.contains("n")) {
                         _log.info(i + ": " + result.next());
-                    }
+                   // }
                 }
             } else if (parsed_query instanceof GraphQuery) {
                 _log.info(MessageCatalog._00022_CONSTRUCT_ASK_QUERY, parsed_query);

@@ -48,7 +48,7 @@ public class ExportQuery {
         if (!fq.isOrderBy()) {
             setQueryOrderBy();
         }
-        setQueryLimit();
+        //setQueryLimit();
         setQueryGeoVars();
         setGeoQueryVars();
         return q;
@@ -92,7 +92,7 @@ public class ExportQuery {
             List<Var> gvars = getGeoVars(element);
             addUniqueVar(gvars);
             listComponents.add(new Components(element, fq.getTypeFunction(element.toString()),
-                    gvars.get(0).toString().replace("?", ""), 
+                    gvars.get(0).toString().replace("?", ""),
                     gvars.get(1).toString().replace("?", "")));
         }
 
@@ -133,6 +133,10 @@ public class ExportQuery {
 
     public void setQueryLimit() {
         q.setLimit(fq.getLimit());
+    }
+
+    public long getLimit() {
+        return fq.getLimit();
     }
 
     public void setQueryType() {

@@ -14,72 +14,75 @@ import edu.kit.aifb.cumulus.store.Store;
 import edu.kit.aifb.cumulus.store.TripleStore;
 
 /**
- * Supertype layer for all CumulusRDF command line commands.
- * Provides a common behaviour that is reused among all concrete commands.
- * 
+ * Supertype layer for all CumulusRDF command line commands. Provides a common
+ * behaviour that is reused among all concrete commands.
+ *
  * @see http://it.wikipedia.org/wiki/Template_method
  * @author Andrea Gazzarini
  * @since 1.1.0
  */
 public abstract class Command {
-	protected final Log _log = new Log(LoggerFactory.getLogger(Cirrus.class));
-	
-	/**
-	 * Executes this {@link Command}.
-	 * 
-	 * @param commandLine the current command line.
-	 */
-	public final void execute(final CommandLine commandLine) {
-		if (commandLine.hasOption("h")) {
-			HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp("", getOptions());
-			return;
-		}
-		
-		Store store = null;
-		if (commandLine.hasOption("s")) {
-			final String layout = commandLine.getOptionValue("s");
-			if (ConfigValues.STORE_LAYOUT_QUAD.equalsIgnoreCase(layout)) {
-				store = new QuadStore();
-				_log.info(MessageCatalog._00006_USING_QUAD_STORE_LAYOUT);
-			} else {
-				store = new TripleStore();
-				_log.info(MessageCatalog._00005_USING_TRIPLE_STORE_LAYOUT);
-			} 
-		} else {
-			store = new TripleStore();
-			_log.info(MessageCatalog._00005_USING_TRIPLE_STORE_LAYOUT);
-		}
 
-		try {
-			store.open();
+    protected final Log _log = new Log(LoggerFactory.getLogger(Cirrus.class));
 
-			doExecute(commandLine, store);
+    /**
+     * Executes this {@link Command}.
+     *
+     * @param commandLine the current command line.
+     */
+    public final void execute(final CommandLine commandLine) {
+        if (commandLine.hasOption("h")) {
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp("", getOptions());
+            return;
+        }
 
-		} catch (final CumulusStoreException exception) {
-			_log.error(MessageCatalog._00012_CUMULUS_SYSTEM_INTERNAL_FAILURE, exception);
-		} finally {
-			try {
-				store.close();
-			} catch (Exception exception) {
-				_log.error(MessageCatalog._00012_CUMULUS_SYSTEM_INTERNAL_FAILURE, exception);
-			}
-		}
-	}
-	
-	/**
-	 * Primitive operation that defines the concrete command behaviour.
-	 * 
-	 * @param commandLine the current command line.
-	 * @param store the RDF store in use.
-	 */
-	public abstract void doExecute(CommandLine commandLine, Store store);
-	
-	/**
-	 * Returns the options associated with this command.
-	 * Each concrete command must define here all available options.
-	 * 
-	 * @return the options associated with this command.
-	 */
-	abstract Options getOptions();
+        Store store = null;
+        if (commandLine.hasOption("s")) {
+            final String layout = commandLine.getOptionValue("s");
+            if (ConfigValues.STORE_LAYOUT_QUAD.equalsIgnoreCase(layout)) {
+                store = new QuadStore();
+                _log.info(MessageCatalog._00006_USING_QUAD_STORE_LAYOUT);
+            } else {
+                store = new TripleStore();
+                _log.info(MessageCatalog._00005_USING_TRIPLE_STORE_LAYOUT);
+            }
+        } else {
+            store = new TripleStore();
+            _log.info(MessageCatalog._00005_USING_TRIPLE_STORE_LAYOUT);
+        }
+        try {
+            
+            if (!((this instanceof Query)||(this instanceof GQuery))) {
+                store.open();
+            }
+            
+            doExecute(commandLine, store);
+            
+        } catch (final CumulusStoreException exception) {
+            _log.error(MessageCatalog._00012_CUMULUS_SYSTEM_INTERNAL_FAILURE, exception);
+        } finally {
+            try {
+                store.close();
+            } catch (Exception exception) {
+                _log.error(MessageCatalog._00012_CUMULUS_SYSTEM_INTERNAL_FAILURE, exception);
+            }
+        }
+    }
+
+    /**
+     * Primitive operation that defines the concrete command behaviour.
+     *
+     * @param commandLine the current command line.
+     * @param store the RDF store in use.
+     */
+    public abstract void doExecute(CommandLine commandLine, Store store);
+
+    /**
+     * Returns the options associated with this command. Each concrete command
+     * must define here all available options.
+     *
+     * @return the options associated with this command.
+     */
+    abstract Options getOptions();
 }

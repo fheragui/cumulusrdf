@@ -165,12 +165,12 @@
     </reporting>	
     <modules>
         <module>cumulusrdf-framework</module>
-        <!--	<module>cumulusrdf-test-framework</module> -->
+        <module>cumulusrdf-test-framework</module>
         <module>cumulusrdf-pluggable-storage</module>		
         <module>cumulusrdf-core</module>
         <module>cumulusrdf-web-module</module>
         <module>cumulusrdf-standalone</module>
-        <module>cumulusrdf-integration-tests</module>
+       <!-- <module>cumulusrdf-integration-tests</module> -->
         <module>Geography</module>
     </modules>
 </project>
