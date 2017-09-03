@@ -99,6 +99,11 @@
 			<artifactId>cumulusrdf-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+	 <dependency>
+	  <groupId>${project.groupId}</groupId>
+	  <artifactId>Geography</artifactId>
+	  <version>${project.version}</version>
+	 </dependency>
 	</dependencies>
 	
 	<build>
