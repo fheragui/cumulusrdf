@@ -9,7 +9,7 @@
     <artifactId>Geography</artifactId>
     <packaging>jar</packaging>
     <name>CumulusRDF: Geography</name>
-        <dependencies>
+    <dependencies>
         <dependency>
             <groupId>org.apache.jena</groupId>
             <artifactId>jena-arq</artifactId>
