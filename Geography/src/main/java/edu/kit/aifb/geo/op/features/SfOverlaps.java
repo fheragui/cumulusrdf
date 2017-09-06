@@ -12,10 +12,11 @@ import edu.kit.aifb.geo.op.IOperations;
  *
  * @author paul
  */
-public class SfOverlaps implements IOperations{
+public class SfOverlaps implements IOperations {
 
     @Override
     public boolean calculate(Geometry a, Geometry b) {
-  return a.overlaps(b); }
-    
+        return a.overlaps(b);
+    }
+
 }

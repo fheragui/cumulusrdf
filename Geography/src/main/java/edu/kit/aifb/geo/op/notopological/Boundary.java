@@ -1,14 +1,22 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package edu.kit.aifb.geo.op.notopological;
+
+import com.vividsolutions.jts.geom.Geometry;
+import edu.kit.aifb.geo.op.IOperations;
 
 /**
  *
  * @author paul
  */
-public class Boundary {
+public class Boundary implements IOperations{
+    /**
+     * This is the opposite of disjoint
+     * @param a
+     * @param b
+     * @return 
+     */
+    @Override
+    public boolean calculate(Geometry a, Geometry b) {
+        return !a.disjoint(b);
+    }
     
 }

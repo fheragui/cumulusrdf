@@ -1,4 +1,3 @@
-
 package edu.kit.aifb.geo.op.features;
 
 import com.vividsolutions.jts.geom.Geometry;

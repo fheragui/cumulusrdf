@@ -7,6 +7,10 @@ import edu.kit.aifb.geo.op.features.SfContains;
 import edu.kit.aifb.geo.op.features.SfCrosses;
 import edu.kit.aifb.geo.op.features.SfDisjoint;
 import edu.kit.aifb.geo.op.features.SfEquals;
+import edu.kit.aifb.geo.op.features.SfIntersects;
+import edu.kit.aifb.geo.op.features.SfOverlaps;
+import edu.kit.aifb.geo.op.features.SfTouches;
+import edu.kit.aifb.geo.op.features.SfWithin;
 
 /**
  *
@@ -30,7 +34,16 @@ public class EjectCalculus {
                 option = new SfEquals();
                 break;
             case "sfIntersects":
-                option = new SfEquals();
+                option = new SfIntersects();
+                break;
+            case "sfOverlaps":
+                option = new SfOverlaps();
+                break;
+            case "fTouches":
+                option = new SfTouches();
+                break;
+            case "sfWithin":
+                option = new SfWithin();
                 break;
             default:
                 break;

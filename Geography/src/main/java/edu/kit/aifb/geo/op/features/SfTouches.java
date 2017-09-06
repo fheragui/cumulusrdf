@@ -12,10 +12,11 @@ import edu.kit.aifb.geo.op.IOperations;
  *
  * @author paul
  */
-public class SfTouches implements IOperations{
+public class SfTouches implements IOperations {
 
     @Override
     public boolean calculate(Geometry a, Geometry b) {
-  return a.touches(b); }
-    
+        return a.touches(b);
+    }
+
 }

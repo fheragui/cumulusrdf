@@ -12,13 +12,14 @@ import edu.kit.aifb.cumulus.store.sesame.CumulusRDFSail;
 import edu.kit.aifb.geo.builder.BuildQuery;
 import edu.kit.aifb.geo.builder.EjectCalculus;
 import edu.kit.aifb.geo.builder.util.Components;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.openrdf.query.Binding;
+import org.openrdf.query.BindingSet;
 import org.openrdf.query.BooleanQuery;
 import org.openrdf.query.GraphQuery;
 import org.openrdf.query.GraphQueryResult;
@@ -41,18 +42,21 @@ public class GQuery extends Command {
                 + "PREFIX geoes: <http://geo.marmotta.es/ontology#>\n"
                 + "PREFIX geo: <http://www.opengis.net/ont/geosparql#>\n"
                 + "PREFIX geof: <http://www.opengis.net/def/function/geosparql/>\n"
-                + "SELECT DISTINCT ?labelMunicipios \n"
+                + "\n"
+                + "SELECT DISTINCT ?labelMunicipios\n"
                 + "WHERE {  \n"
-                + "  ?subject a <http://geo.marmotta.es/ontology#provincia>.\n"
-                + "  ?subject rdfs:label \"Madrid\"@es.\n"
+                + "  ?subject a <http://geo.marmotta.es/ontology#municipio>.\n"
+                + "  ?subject rdfs:label ?labelMunicipios.\n"
                 + "  ?subject geoes:hasExactGeometry ?geo.\n"
                 + "  ?geo geo:asWKT ?wkt.\n"
-                + "  ?subject2 a <http://geo.marmotta.es/ontology#municipio>.\n"
-                + "  ?subject2 rdfs:label ?labelMunicipios.\n"
+                + "  \n"
+                + "  ?subject2 a <http://geo.marmotta.es/ontology#provincia>.\n"
+                + "  ?subject2 rdfs:label \"Madrid\"@es.\n"
                 + "  ?subject2 geoes:hasExactGeometry ?geo2.\n"
                 + "  ?geo2 geo:asWKT ?wkt2.\n"
-                + "  FILTER (geof:sfContains(?wkt, ?wkt2))\n"
-                + "} \n"
+                + "\n"
+                + "  FILTER (geof:sfWithin(?wkt, ?wkt2))  \n"
+                + "}\n"
                 + "ORDER BY ?labelMunicipios\n"
                 + "LIMIT 10";
 
@@ -63,16 +67,15 @@ public class GQuery extends Command {
         try {
             final CumulusRDFSail sail = new CumulusRDFSail(store);
             sail.initialize();
-
             repo = new SailRepository(sail);
             con = repo.getConnection();
+
             convert = new BuildQuery();
-            op = new EjectCalculus();
-            
             String gquery = convert.getQuery(query);
+            EjectCalculus calcular = new EjectCalculus();
             long limit = convert.getLimit();
-            
-            List<Components> componentes = convert.getC();
+            long cont = 0;
+            List<Components> condiciones = convert.getC();
 
             org.openrdf.query.Query parsed_query = con.prepareQuery(QueryLanguage.SPARQL, gquery);
 
@@ -84,23 +87,33 @@ public class GQuery extends Command {
             } else if (parsed_query instanceof TupleQuery) {
                 _log.info(MessageCatalog._00021_PARSED_SELECT_ANSWER);
                 for (final TupleQueryResult result = ((TupleQuery) parsed_query).evaluate(); result.hasNext(); i++) {
-//                    List<String> ls = new ArrayList<>();
-//                    for (Components componente : componentes) {
-//                        String ops = componente.getOp();
-//                        String x = result.next().getValue(componente.getX()).stringValue();
-//                        String y = result.next().getValue(componente.getY()).stringValue();
-//                        if (!((x.isEmpty()) && y.isEmpty())) {
-//                            if (op.topologicalRelations(ops, x, y)) {
-//                                ls.add("s");
-//                            } else {
-//                                ls.add("n");
-//                            }
-//                        }
-//                    }
-//
-//                    if (!ls.contains("n")) {
-                        _log.info(i + ": " + result.next());
-                   // }
+
+                    BindingSet bs = result.next();
+                    List<String> est = new ArrayList<>();
+
+                    for (Components c : condiciones) {
+                        String operation = c.getOp();
+                        String varx = bs.getBinding(c.getX()).getValue().stringValue();
+                        String vary = bs.getBinding(c.getY()).getValue().stringValue();
+                        if (calcular.topologicalRelations(operation, varx, vary)) {
+                            est.add("s");
+                        } else {
+                            est.add("n");
+                        }
+                    }
+
+                    if (!est.contains("n")) {
+                        if (limit > 0 && cont < limit) {
+                            _log.info(i + ": " + bs.getValue("labelMunicipios"));
+                            cont++;
+                        } else if (cont > limit) {
+                            break;
+                        }
+                        if (limit < 0) {
+                            _log.info(i + ": " + bs.getValue("labelMunicipios"));
+                        }
+                    }
+
                 }
             } else if (parsed_query instanceof GraphQuery) {
                 _log.info(MessageCatalog._00022_CONSTRUCT_ASK_QUERY, parsed_query);
@@ -109,6 +122,7 @@ public class GQuery extends Command {
                     _log.info(i + ": " + result.next());
                 }
             }
+
         } catch (final Exception exception) {
             _log.error(MessageCatalog._00026_NWS_SYSTEM_INTERNAL_FAILURE, exception);
             return;
