@@ -13,6 +13,7 @@ import edu.kit.aifb.geo.builder.BuildQuery;
 import edu.kit.aifb.geo.builder.EjectCalculus;
 import edu.kit.aifb.geo.builder.util.Components;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
@@ -26,6 +27,9 @@ import org.openrdf.query.GraphQueryResult;
 import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.TupleQuery;
 import org.openrdf.query.TupleQueryResult;
+import org.openrdf.query.impl.EmptyBindingSet;
+import org.openrdf.query.impl.ListBindingSet;
+import org.openrdf.query.impl.MapBindingSet;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.repository.sail.SailRepositoryConnection;
 
@@ -43,19 +47,19 @@ public class GQuery extends Command {
                 + "PREFIX geo: <http://www.opengis.net/ont/geosparql#>\n"
                 + "PREFIX geof: <http://www.opengis.net/def/function/geosparql/>\n"
                 + "\n"
-                + "SELECT DISTINCT ?labelMunicipios\n"
+                + "SELECT DISTINCT ?labelMunicipios \n"
                 + "WHERE {  \n"
-                + "  ?subject a <http://geo.marmotta.es/ontology#municipio>.\n"
-                + "  ?subject rdfs:label ?labelMunicipios.\n"
+                + "  ?subject a <http://geo.marmotta.es/ontology#provincia>.\n"
+                + "  ?subject rdfs:label \"Madrid\"@es.\n"
                 + "  ?subject geoes:hasExactGeometry ?geo.\n"
                 + "  ?geo geo:asWKT ?wkt.\n"
                 + "  \n"
-                + "  ?subject2 a <http://geo.marmotta.es/ontology#provincia>.\n"
-                + "  ?subject2 rdfs:label \"Madrid\"@es.\n"
+                + "  ?subject2 a <http://geo.marmotta.es/ontology#municipio>.\n"
+                + "  ?subject2 rdfs:label ?labelMunicipios.\n"
                 + "  ?subject2 geoes:hasExactGeometry ?geo2.\n"
                 + "  ?geo2 geo:asWKT ?wkt2.\n"
-                + "\n"
-                + "  FILTER (geof:sfWithin(?wkt, ?wkt2))  \n"
+                + "  \n"
+                + "  FILTER (geof:sfOverlaps(?wkt, ?wkt2))      \n"
                 + "}\n"
                 + "ORDER BY ?labelMunicipios\n"
                 + "LIMIT 10";
@@ -90,6 +94,7 @@ public class GQuery extends Command {
 
                     BindingSet bs = result.next();
                     List<String> est = new ArrayList<>();
+                    List<String> outs = new ArrayList<>();
 
                     for (Components c : condiciones) {
                         String operation = c.getOp();
@@ -100,17 +105,37 @@ public class GQuery extends Command {
                         } else {
                             est.add("n");
                         }
+                        if (!outs.contains(c.getX())) {
+                            outs.add(c.getX());
+                        }
+                        if (!outs.contains(c.getY())) {
+                            outs.add(c.getY());
+                        }
                     }
 
                     if (!est.contains("n")) {
+                        List<Binding> bds = new ArrayList();
+                        List<Binding> bdsEnd = new ArrayList();
+                        Iterator<Binding> ib = bs.iterator();
+
+                        while (ib.hasNext()) {
+                            bds.add(ib.next());
+                        }
+
+                        for (Binding bd : bds) {
+                            if (!outs.contains(bd.getName())) {
+                                bdsEnd.add(bd);
+                            }
+                        }
                         if (limit > 0 && cont < limit) {
-                            _log.info(i + ": " + bs.getValue("labelMunicipios"));
+
+                            _log.info(i + ": " + bdsEnd);
                             cont++;
                         } else if (cont > limit) {
                             break;
                         }
                         if (limit < 0) {
-                            _log.info(i + ": " + bs.getValue("labelMunicipios"));
+                            _log.info(i + ": " + bdsEnd);
                         }
                     }
 
