@@ -61,8 +61,8 @@ public class GQuery extends Command {
                 + "  \n"
                 + "  FILTER (geof:sfOverlaps(?wkt, ?wkt2))      \n"
                 + "}\n"
-                + "ORDER BY ?labelMunicipios\n"
-                + "LIMIT 10";
+                + "ORDER BY ?labelMunicipios\n";
+               // + "LIMIT 20";
 
         SailRepositoryConnection con = null;
         SailRepository repo = null;
@@ -112,29 +112,25 @@ public class GQuery extends Command {
                             outs.add(c.getY());
                         }
                     }
-
                     if (!est.contains("n")) {
                         List<Binding> bds = new ArrayList();
                         List<Binding> bdsEnd = new ArrayList();
                         Iterator<Binding> ib = bs.iterator();
-
                         while (ib.hasNext()) {
                             bds.add(ib.next());
                         }
-
                         for (Binding bd : bds) {
                             if (!outs.contains(bd.getName())) {
                                 bdsEnd.add(bd);
                             }
                         }
                         if (limit > 0 && cont < limit) {
-
                             _log.info(i + ": " + bdsEnd);
                             cont++;
                         } else if (cont > limit) {
                             break;
-                        }
-                        if (limit < 0) {
+                        }else 
+                        {
                             _log.info(i + ": " + bdsEnd);
                         }
                     }

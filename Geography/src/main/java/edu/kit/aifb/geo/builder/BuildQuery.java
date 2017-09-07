@@ -18,7 +18,11 @@ public class BuildQuery {
     public String getQuery(String qry) {
         ExportQuery eq = new ExportQuery(qry);
         Query query = eq.buildSimpleQuery();
-        _limit = eq.getLimit();
+        if (eq.getLimit() < 0) {
+            _limit = 0;
+        } else {
+            _limit = eq.getLimit();
+        }
         c.addAll(eq.getListComponents());
         return query.toString();
     }
