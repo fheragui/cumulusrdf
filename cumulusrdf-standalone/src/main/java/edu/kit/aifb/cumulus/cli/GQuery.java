@@ -44,20 +44,20 @@ public class GQuery extends Command {
                 + "PREFIX geo: <http://www.opengis.net/ont/geosparql#>\n"
                 + "PREFIX geof: <http://www.opengis.net/def/function/geosparql/>\n"
                 + "\n"
-                + "SELECT DISTINCT ?labelMunicipios \n"
+                + "SELECT DISTINCT ?labelMunicipios\n"
                 + "WHERE {  \n"
-                + "  ?subject a <http://geo.marmotta.es/ontology#provincia>.\n"
-                + "  ?subject rdfs:label \"Madrid\"@es.\n"
+                + "  ?subject a <http://geo.marmotta.es/ontology#municipio>.\n"
+                + "  ?subject rdfs:label ?labelMunicipios.\n"
                 + "  ?subject geoes:hasExactGeometry ?geo.\n"
                 + "  ?geo geo:asWKT ?wkt.\n"
                 + "  \n"
-                + "  ?subject2 a <http://geo.marmotta.es/ontology#municipio>.\n"
-                + "  ?subject2 rdfs:label ?labelMunicipios.\n"
+                + "  ?subject2 a <http://geo.marmotta.es/ontology#provincia>.\n"
+                + "  ?subject2 rdfs:label \"Madrid\"@es.\n"
                 + "  ?subject2 geoes:hasExactGeometry ?geo2.\n"
                 + "  ?geo2 geo:asWKT ?wkt2.\n"
-                + "  \n"
-                + "  FILTER (geof:sfContains(?wkt, ?wkt2))\n"
-                + "} \n"
+                + "\n"
+                + "  FILTER (geof:sfWithin(?wkt, ?wkt2))  \n"
+                + "}\n"
                 + "ORDER BY ?labelMunicipios\n"
                 + "LIMIT 10";
 
@@ -122,14 +122,15 @@ public class GQuery extends Command {
                             }
                         }
                         if (limit > 0 && cont < limit) {
-                            _log.info(i + ": " + bdsEnd);
+                            _log.info((i + 1) + ": " + bdsEnd);
                             cont++;
                         }
-                        if (cont > limit) {
+                        if (cont >= limit && limit != -1) {
                             break;
                         }
-                        if (limit == 0) {
-                            _log.info(i + ": " + bdsEnd);
+
+                        if (limit == -1) {
+                            _log.info((i + 1) + ": " + bdsEnd);
                         }
                     }
 
