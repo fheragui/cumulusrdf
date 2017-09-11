@@ -27,9 +27,6 @@ import org.openrdf.query.GraphQueryResult;
 import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.TupleQuery;
 import org.openrdf.query.TupleQueryResult;
-import org.openrdf.query.impl.EmptyBindingSet;
-import org.openrdf.query.impl.ListBindingSet;
-import org.openrdf.query.impl.MapBindingSet;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.repository.sail.SailRepositoryConnection;
 
@@ -42,7 +39,7 @@ public class GQuery extends Command {
     @Override
     public void doExecute(CommandLine commandLine, Store store) {
         //final String query = commandLine.getOptionValue("q");
-        final String query = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+        final String query = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
                 + "PREFIX geoes: <http://geo.marmotta.es/ontology#>\n"
                 + "PREFIX geo: <http://www.opengis.net/ont/geosparql#>\n"
                 + "PREFIX geof: <http://www.opengis.net/def/function/geosparql/>\n"
@@ -59,10 +56,10 @@ public class GQuery extends Command {
                 + "  ?subject2 geoes:hasExactGeometry ?geo2.\n"
                 + "  ?geo2 geo:asWKT ?wkt2.\n"
                 + "  \n"
-                + "  FILTER (geof:sfOverlaps(?wkt, ?wkt2))      \n"
-                + "}\n"
-                + "ORDER BY ?labelMunicipios\n";
-               // + "LIMIT 20";
+                + "  FILTER (geof:sfContains(?wkt, ?wkt2))\n"
+                + "} \n"
+                + "ORDER BY ?labelMunicipios\n"
+                + "LIMIT 10";
 
         SailRepositoryConnection con = null;
         SailRepository repo = null;
@@ -127,10 +124,11 @@ public class GQuery extends Command {
                         if (limit > 0 && cont < limit) {
                             _log.info(i + ": " + bdsEnd);
                             cont++;
-                        } else if (cont > limit) {
+                        }
+                        if (cont > limit) {
                             break;
-                        }else 
-                        {
+                        }
+                        if (limit == 0) {
                             _log.info(i + ": " + bdsEnd);
                         }
                     }
