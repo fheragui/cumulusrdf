@@ -5,10 +5,18 @@
  */
 package edu.kit.aifb.geo.op.notopological;
 
+import com.vividsolutions.jts.geom.Geometry;
+import edu.kit.aifb.geo.op.IOperationsGeometry;
+
 /**
  *
  * @author paul
  */
-public class Difference {
+public class Difference implements IOperationsGeometry{
+
+    @Override
+    public Geometry calculate(Geometry a, Geometry b) {
+        return a.difference(b);
+    }
     
 }

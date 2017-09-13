@@ -19,7 +19,7 @@ public class BuildQuery {
         ExportQuery eq = new ExportQuery(qry);
         Query query = eq.buildSimpleQuery();
         if (eq.getLimit() < 0) {
-            _limit = 0;
+            _limit = -1;
         } else {
             _limit = eq.getLimit();
         }

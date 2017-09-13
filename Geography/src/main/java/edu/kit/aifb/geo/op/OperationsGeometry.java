@@ -1,7 +1,5 @@
 package edu.kit.aifb.geo.op;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.CoordinateFilter;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.io.ParseException;
@@ -12,20 +10,20 @@ import org.geotools.geometry.jts.JTSFactoryFinder;
  *
  * @author paul
  */
-public class Operations {
+public class OperationsGeometry {
 
-    private IOperations operation;
+    private IOperationsGeometry operationsgeo;
 
-    public Operations(IOperations operation) {
-        this.operation = operation;
+    public OperationsGeometry(IOperationsGeometry operationsgeo) {
+        this.operationsgeo = operationsgeo;
     }
 
-    public boolean calculate(String wkt1, String wkt2) throws ParseException {
+    public String calculate(String wkt1, String wkt2) throws ParseException {
         GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory(null);
         WKTReader reader = new WKTReader(geometryFactory);
         Geometry a = reader.read(getWkt(wkt1));
         Geometry b = reader.read(getWkt(wkt2));
-        return operation.calculate(a, b);
+        return operationsgeo.calculate(a, b).toString();
     }
 
     private String getWkt(String s) {
@@ -39,24 +37,11 @@ public class Operations {
         return v;
     }
 
-    public IOperations getOperation() {
-        return operation;
+    public IOperationsGeometry getOperationsgeo() {
+        return operationsgeo;
     }
 
-    public void setOperation(IOperations operation) {
-        this.operation = operation;
+    public void setOperationsgeo(IOperationsGeometry operationsgeo) {
+        this.operationsgeo = operationsgeo;
     }
-
-    /*
-    Invertir Coordenadas
-    */
-    private static class InvertCoordinateFilter implements CoordinateFilter {        
-        @Override
-        public void filter(Coordinate coord) {
-            double oldX = coord.x;
-            coord.x = coord.y;
-            coord.y = oldX;
-        }
-    }
-
 }

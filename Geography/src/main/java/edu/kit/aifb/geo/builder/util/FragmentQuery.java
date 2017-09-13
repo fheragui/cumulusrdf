@@ -95,7 +95,8 @@ public class FragmentQuery {
      */
     private String[] getFunctions() {
         String[] geof = {"sfEquals", "sfDisjoint", "sfIntersects",
-            "sfTouches", "sfWithin", "sfContains", "sfOverlaps", "sfCrosses", "sfDistance"};
+            "sfTouches", "sfWithin", "sfContains", "sfOverlaps",
+            "sfCrosses", "difference", "intersection", "union"};
         return geof;
     }
 }
