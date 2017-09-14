@@ -5,20 +5,25 @@
  */
 package edu.kit.aifb.cumulus.cli;
 
+import com.vividsolutions.jts.io.ParseException;
 import edu.kit.aifb.cumulus.cli.log.MessageCatalog;
 import edu.kit.aifb.cumulus.store.Store;
 import edu.kit.aifb.cumulus.store.sesame.CumulusRDFSail;
 
 import edu.kit.aifb.geo.builder.BuildQuery;
 import edu.kit.aifb.geo.builder.EjectCalculus;
+import edu.kit.aifb.geo.builder.util.ComponentSelect;
 import edu.kit.aifb.geo.builder.util.Components;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.openrdf.model.Value;
 import org.openrdf.query.Binding;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.BooleanQuery;
@@ -39,27 +44,22 @@ public class GQuery extends Command {
     @Override
     public void doExecute(CommandLine commandLine, Store store) {
         //final String query = commandLine.getOptionValue("q");
-        final String query = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>"
-                + "PREFIX geoes: <http://geo.marmotta.es/ontology#>\n"
+        final String query = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX geoes: <http://geo.marmotta.es/ontology#>\n"
                 + "PREFIX geo: <http://www.opengis.net/ont/geosparql#>\n"
                 + "PREFIX geof: <http://www.opengis.net/def/function/geosparql/>\n"
                 + "\n"
-                + "SELECT DISTINCT ?labelMunicipios\n"
+                + "SELECT DISTINCT ?wktA ?wktB (geof:union(?wktA,?wktB) as ?union)\n"
                 + "WHERE {  \n"
-                + "  ?subject a <http://geo.marmotta.es/ontology#municipio>.\n"
-                + "  ?subject rdfs:label ?labelMunicipios.\n"
+                + "  ?subject a <http://geo.marmotta.es/ontology#provincia>.\n"
+                + "  ?subject rdfs:label \"Madrid\"@es.\n"
                 + "  ?subject geoes:hasExactGeometry ?geo.\n"
-                + "  ?geo geo:asWKT ?wkt.\n"
+                + "  ?geo geo:asWKT ?wktA.\n"
                 + "  \n"
                 + "  ?subject2 a <http://geo.marmotta.es/ontology#provincia>.\n"
-                + "  ?subject2 rdfs:label \"Madrid\"@es.\n"
+                + "  ?subject2 rdfs:label \"Barcelona\" @es.\n"
                 + "  ?subject2 geoes:hasExactGeometry ?geo2.\n"
-                + "  ?geo2 geo:asWKT ?wkt2.\n"
-                + "\n"
-                + "  FILTER (geof:sfWithin(?wkt, ?wkt2))  \n"
-                + "}\n"
-                + "ORDER BY ?labelMunicipios\n"
-                + "LIMIT 10";
+                + "  ?geo2 geo:asWKT ?wktB.\n"
+                + "}";
 
         SailRepositoryConnection con = null;
         SailRepository repo = null;
@@ -77,6 +77,7 @@ public class GQuery extends Command {
             long limit = convert.getLimit();
             long cont = 0;
             List<Components> condiciones = convert.getC();
+            List<ComponentSelect> condicionesSelect = convert.getC2();
 
             org.openrdf.query.Query parsed_query = con.prepareQuery(QueryLanguage.SPARQL, gquery);
 
@@ -93,21 +94,61 @@ public class GQuery extends Command {
                     List<String> est = new ArrayList<>();
                     List<String> outs = new ArrayList<>();
 
-                    for (Components c : condiciones) {
-                        String operation = c.getOp();
-                        String varx = bs.getBinding(c.getX()).getValue().stringValue();
-                        String vary = bs.getBinding(c.getY()).getValue().stringValue();
-                        if (calcular.topologicalRelations(operation, varx, vary)) {
-                            est.add("s");
-                        } else {
-                            est.add("n");
+                    if (condiciones.size() > 0) {
+                        for (Components c : condiciones) {
+                            String operation = c.getOp();
+                            String varx = bs.getBinding(c.getX()).getValue().stringValue();
+                            String vary = bs.getBinding(c.getY()).getValue().stringValue();
+                            if (calcular.topologicalRelations(operation, varx, vary)) {
+                                est.add("s");
+                            } else {
+                                est.add("n");
+                            }
+                            if (!outs.contains(c.getX())) {
+                                outs.add(c.getX());
+                            }
+                            if (!outs.contains(c.getY())) {
+                                outs.add(c.getY());
+                            }
                         }
-                        if (!outs.contains(c.getX())) {
-                            outs.add(c.getX());
+                    }
+
+                    List<Binding> nbs = null;
+                    if (condicionesSelect.size() > 0) {
+                        nbs = new ArrayList<>();
+                        for (ComponentSelect vs : condicionesSelect) {
+                            String funcion = vs.getFuncion();
+                            String op1 = bs.getBinding(vs.getOperador1()).getValue().stringValue();
+                            String op2 = bs.getBinding(vs.getOperador2()).getValue().stringValue();
+                            Binding nb = new Binding() {
+                                @Override
+                                public String getName() {
+                                    return vs.getNombreRes();
+                                }
+
+                                @Override
+                                public Value getValue() {
+                                    return () -> {
+                                        try {
+                                            return calcular.geometry(funcion, op1, op2);
+                                        } catch (ParseException ex) {
+                                            Logger.getLogger(GQuery.class.getName()).log(Level.SEVERE, null, ex);
+                                        }
+                                        return null;
+                                    };
+                                }
+                            };
+                            nbs.add(nb);
+                            if (nb.getValue() != null) {
+                                est.add("s");
+                            } else {
+                                est.add("n");
+                            }
                         }
-                        if (!outs.contains(c.getY())) {
-                            outs.add(c.getY());
-                        }
+                    }
+
+                    if (condicionesSelect.size() > 0 && condiciones.size() > 0) {
+
                     }
                     if (!est.contains("n")) {
                         List<Binding> bds = new ArrayList();
@@ -120,6 +161,9 @@ public class GQuery extends Command {
                             if (!outs.contains(bd.getName())) {
                                 bdsEnd.add(bd);
                             }
+                        }
+                        if (nbs != null) {
+                            bdsEnd.addAll(bds);
                         }
                         if (limit > 0 && cont < limit) {
                             _log.info((i + 1) + ": " + bdsEnd);

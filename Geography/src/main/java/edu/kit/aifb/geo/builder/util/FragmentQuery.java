@@ -1,12 +1,15 @@
 package edu.kit.aifb.geo.builder.util;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.SortCondition;
 import org.apache.jena.sparql.core.Var;
+import org.apache.jena.sparql.expr.Expr;
 import org.apache.jena.sparql.syntax.Element;
 import org.apache.jena.sparql.syntax.ElementGroup;
 import org.apache.jena.sparql.syntax.*;
@@ -51,8 +54,34 @@ public class FragmentQuery {
     }
 
     public List<Var> getVars() {
-        vars = q.getProjectVars();
-        return vars;
+        List<Var> lv1 = q.getProjectVars();
+        if (q.getProject().getExprs().entrySet() != null) {
+            List<Var> lv2 = new ArrayList<>();
+            List<Var> lv3 = new ArrayList<>();
+            for (Map.Entry<Var, Expr> entry : q.getProject().getExprs().entrySet()) {
+                if (getTypeFunction(entry.getValue().toString()) != null) {
+                    lv2.add(entry.getKey());
+                }
+            }
+            for (Var var : lv1) {
+                if (!lv2.contains(var)) {
+                    lv3.add(var);
+                }
+            }
+            return lv3;
+        }
+
+        return lv1;
+    }
+
+    public Map<Var, Expr> getSelectGeoVars() {
+        Map<Var, Expr> mps = new HashMap<>();
+        for (Map.Entry<Var, Expr> entry : q.getProject().getExprs().entrySet()) {
+            if (getTypeFunction(entry.getValue().toString()) != null) {
+                mps.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return mps;
     }
 
     public long getLimit() {

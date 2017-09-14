@@ -1,7 +1,9 @@
 package edu.kit.aifb.geo.builder;
 
+import edu.kit.aifb.geo.builder.util.ComponentSelect;
 import edu.kit.aifb.geo.builder.util.Components;
 import edu.kit.aifb.geo.builder.util.ExportQuery;
+
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.jena.query.Query;
@@ -13,6 +15,7 @@ import org.apache.jena.query.Query;
 public class BuildQuery {
 
     private List<Components> c = new ArrayList<>();
+    private List<ComponentSelect> c2 = new ArrayList<>();
     private long _limit;
 
     public String getQuery(String qry) {
@@ -24,6 +27,9 @@ public class BuildQuery {
             _limit = eq.getLimit();
         }
         c.addAll(eq.getListComponents());
+        if (eq.getComponentes_select() != null) {
+            c2.addAll(eq.getComponentes_select());
+        }
         return query.toString();
     }
 
@@ -37,6 +43,14 @@ public class BuildQuery {
 
     public void setC(List<Components> c) {
         this.c = c;
+    }
+
+    public void setC2(List<ComponentSelect> c2) {
+        this.c2 = c2;
+    }
+
+    public List<ComponentSelect> getC2() {
+        return c2;
     }
 
 }

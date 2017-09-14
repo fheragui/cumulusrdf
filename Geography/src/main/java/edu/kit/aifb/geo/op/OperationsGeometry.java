@@ -26,6 +26,14 @@ public class OperationsGeometry {
         return operationsgeo.calculate(a, b).toString();
     }
 
+    public IOperationsGeometry getOperationsgeo() {
+        return operationsgeo;
+    }
+
+    public void setOperationsgeo(IOperationsGeometry operationsgeo) {
+        this.operationsgeo = operationsgeo;
+    }
+
     private String getWkt(String s) {
         String[] splitString = (s.split("<|>"));
         String v = null;
@@ -35,13 +43,5 @@ public class OperationsGeometry {
             }
         }
         return v;
-    }
-
-    public IOperationsGeometry getOperationsgeo() {
-        return operationsgeo;
-    }
-
-    public void setOperationsgeo(IOperationsGeometry operationsgeo) {
-        this.operationsgeo = operationsgeo;
     }
 }
