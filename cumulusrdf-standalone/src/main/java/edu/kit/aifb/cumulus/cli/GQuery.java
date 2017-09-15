@@ -32,6 +32,8 @@ import org.openrdf.query.GraphQueryResult;
 import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.TupleQuery;
 import org.openrdf.query.TupleQueryResult;
+import org.openrdf.query.algebra.Var;
+import org.openrdf.query.impl.BindingImpl;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.repository.sail.SailRepositoryConnection;
 
@@ -44,22 +46,27 @@ public class GQuery extends Command {
     @Override
     public void doExecute(CommandLine commandLine, Store store) {
         //final String query = commandLine.getOptionValue("q");
-        final String query = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX geoes: <http://geo.marmotta.es/ontology#>\n"
+        final String query = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
+                + "PREFIX geoes: <http://geo.marmotta.es/ontology#>\n"
                 + "PREFIX geo: <http://www.opengis.net/ont/geosparql#>\n"
                 + "PREFIX geof: <http://www.opengis.net/def/function/geosparql/>\n"
                 + "\n"
-                + "SELECT DISTINCT ?wktA ?wktB (geof:union(?wktA,?wktB) as ?union)\n"
+                + "SELECT DISTINCT ?labelMunicipios \n"
                 + "WHERE {  \n"
                 + "  ?subject a <http://geo.marmotta.es/ontology#provincia>.\n"
                 + "  ?subject rdfs:label \"Madrid\"@es.\n"
                 + "  ?subject geoes:hasExactGeometry ?geo.\n"
-                + "  ?geo geo:asWKT ?wktA.\n"
+                + "  ?geo geo:asWKT ?wkt.\n"
                 + "  \n"
-                + "  ?subject2 a <http://geo.marmotta.es/ontology#provincia>.\n"
-                + "  ?subject2 rdfs:label \"Barcelona\" @es.\n"
+                + "  ?subject2 a <http://geo.marmotta.es/ontology#municipio>.\n"
+                + "  ?subject2 rdfs:label ?labelMunicipios.\n"
                 + "  ?subject2 geoes:hasExactGeometry ?geo2.\n"
-                + "  ?geo2 geo:asWKT ?wktB.\n"
-                + "}";
+                + "  ?geo2 geo:asWKT ?wkt2.\n"
+                + "  \n"
+                + "  FILTER (geof:sfContains(?wkt, ?wkt2))\n"
+                + "} \n"
+                + "ORDER BY ?labelMunicipios\n"
+                + "LIMIT 10";
 
         SailRepositoryConnection con = null;
         SailRepository repo = null;
@@ -94,6 +101,10 @@ public class GQuery extends Command {
                     List<String> est = new ArrayList<>();
                     List<String> outs = new ArrayList<>();
 
+                    if (condicionesSelect.size() > 0 && condiciones.size() > 0) {
+                        //implementar
+                    }
+
                     if (condiciones.size() > 0) {
                         for (Components c : condiciones) {
                             String operation = c.getOp();
@@ -120,26 +131,11 @@ public class GQuery extends Command {
                             String funcion = vs.getFuncion();
                             String op1 = bs.getBinding(vs.getOperador1()).getValue().stringValue();
                             String op2 = bs.getBinding(vs.getOperador2()).getValue().stringValue();
-                            Binding nb = new Binding() {
-                                @Override
-                                public String getName() {
-                                    return vs.getNombreRes();
-                                }
-
-                                @Override
-                                public Value getValue() {
-                                    return () -> {
-                                        try {
-                                            return calcular.geometry(funcion, op1, op2);
-                                        } catch (ParseException ex) {
-                                            Logger.getLogger(GQuery.class.getName()).log(Level.SEVERE, null, ex);
-                                        }
-                                        return null;
-                                    };
-                                }
-                            };
-                            nbs.add(nb);
-                            if (nb.getValue() != null) {
+                            String var = vs.getNombreRes();
+                            String resultado = calcular.geometry(funcion, op1, op2);
+                            Value v = () -> resultado;
+                            nbs.add(new BindingImpl(var, v));
+                            if (v.stringValue() != null) {
                                 est.add("s");
                             } else {
                                 est.add("n");
@@ -147,9 +143,6 @@ public class GQuery extends Command {
                         }
                     }
 
-                    if (condicionesSelect.size() > 0 && condiciones.size() > 0) {
-
-                    }
                     if (!est.contains("n")) {
                         List<Binding> bds = new ArrayList();
                         List<Binding> bdsEnd = new ArrayList();
@@ -163,7 +156,7 @@ public class GQuery extends Command {
                             }
                         }
                         if (nbs != null) {
-                            bdsEnd.addAll(bds);
+                            bdsEnd.addAll(nbs);
                         }
                         if (limit > 0 && cont < limit) {
                             _log.info((i + 1) + ": " + bdsEnd);
